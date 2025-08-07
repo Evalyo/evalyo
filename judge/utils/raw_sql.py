@@ -31,16 +31,24 @@ class FakeJoinField:
 
 def join_sql_subquery(
         queryset, subquery, params, join_fields, alias, related_model, join_type=INNER, parent_model=None):
-    if parent_model is not None:
-        parent_alias = parent_model._meta.db_table
-    else:
-        parent_alias = queryset.query.get_initial_alias()
-    if isinstance(queryset.query.external_aliases, dict):  # Django 3.x
+
+    parent_alias = queryset.query.get_initial_alias()
+    try:
         queryset.query.external_aliases[alias] = True
-    else:
+    except TypeError:
         queryset.query.external_aliases.add(alias)
-    join = RawSQLJoin(subquery, params, parent_alias, alias, join_type, FakeJoinField(join_fields, related_model),
-                      join_type == LOUTER)
+    fields = []
+    for local_field, remote_field in join_fields:
+        local_model = parent_model or related_model
+        local = local_model._meta.get_field(local_field)
+        remote = related_model._meta.get_field(remote_field)
+        fields.append((local, remote))
+
+    join = RawSQLJoin(
+        subquery, params, parent_alias, alias, join_type,
+        FakeJoinField(fields, related_model),
+        join_type == LOUTER
+    )
     queryset.query.join(join)
     join.table_alias = alias
 

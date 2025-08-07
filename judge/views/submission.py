@@ -223,6 +223,7 @@ def filter_submissions_by_visible_problems(queryset, user):
         join_fields=[('problem_id', 'id')],
         alias='visible_problems',
         related_model=Problem,
+        parent_model=Submission
     )
 
 
