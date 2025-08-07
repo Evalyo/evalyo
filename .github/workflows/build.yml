@@ -39,6 +39,12 @@ jobs:
         cp .ci.settings.py dmoj/local_settings.py
     - name: Start MySQL
       run: sudo systemctl start mysql.service
+    - name: Setup database
+      run: |
+        sudo mysql -e "CREATE DATABASE IF NOT EXISTS dmoj;"
+        sudo mysql -e "CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY 'root';"
+        sudo mysql -e "GRANT ALL PRIVILEGES ON dmoj.* TO 'root'@'localhost';"
+        sudo mysql -e "FLUSH PRIVILEGES;"
     - name: Run unit tests
       run: uv run coverage run --source=. manage.py test judge
     - name: Generate coverage report
