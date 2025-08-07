@@ -668,9 +668,8 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         kwargs['instance'] = Submission(user=self.request.profile, problem=self.object)
 
         if self.object.is_editable_by(self.request.user):
-            kwargs['judge_choices'] = tuple(
-                Judge.objects.filter(online=True, problems=self.object).values_list('name', 'name'),
-            )
+            judge_names = Judge.objects.filter(online=True, problems=self.object).values_list('name', flat=True)
+            kwargs['judge_choices'] = [(name, name) for name in judge_names]
         else:
             kwargs['judge_choices'] = ()
 
