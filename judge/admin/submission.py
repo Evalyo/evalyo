@@ -125,7 +125,7 @@ class SubmissionAdmin(VersionAdmin):
     actions = ('judge', 'recalculate_score')
     list_display = ('id', 'problem_code', 'problem_name', 'user_column', 'execution_time', 'pretty_memory',
                     'points', 'language_column', 'status', 'result', 'judge_column')
-    list_filter = ('language', SubmissionStatusFilter, SubmissionResultFilter)
+    list_filter = ('language', SubmissionStatusFilter, SubmissionResultFilter, 'problem__code')
     search_fields = ('problem__code', 'problem__name', 'user__user__username')
     actions_on_top = True
     actions_on_bottom = True

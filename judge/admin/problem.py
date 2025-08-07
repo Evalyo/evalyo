@@ -263,6 +263,7 @@ class ProblemPointsVoteAdmin(admin.ModelAdmin):
     list_display = ('points', 'voter', 'linked_problem', 'vote_time')
     search_fields = ('voter__user__username', 'problem__code', 'problem__name')
     readonly_fields = ('voter', 'problem', 'vote_time')
+    list_filter = ('problem__code',)
 
     def get_queryset(self, request):
         return ProblemPointsVote.objects.filter(problem__in=Problem.get_editable_problems(request.user))
