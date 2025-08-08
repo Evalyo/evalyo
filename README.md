@@ -198,3 +198,57 @@ The judge can also grade in the languages listed below:
 * V8 JavaScript
 * Brain\*\*\*\*
 * Zig
+
+## Development
+
+### Code Quality & Linting
+
+This project uses **Ruff** for fast Python linting and code formatting. Ruff replaces multiple tools (flake8, isort, black, etc.) with a single fast linter written in Rust.
+
+#### Setup
+
+Install development dependencies:
+```bash
+uv sync --dev
+```
+
+#### Running Lints
+
+Use the provided lint script for easy development:
+
+```bash
+# Check code style and quality
+./scripts/lint.sh
+
+# Apply automatic fixes and format code
+./scripts/lint.sh fix
+```
+
+Or run Ruff commands directly:
+
+```bash
+# Lint checking
+uv run ruff check --config pyproject.toml .
+
+# Code formatting
+uv run ruff format --config pyproject.toml .
+
+# Apply automatic fixes
+uv run ruff check --config pyproject.toml . --fix
+```
+
+#### Configuration
+
+Ruff configuration is located in `pyproject.toml` under the `[tool.ruff]` section. The configuration is based on the existing `.flake8` settings with additional modern Python best practices.
+
+Key features enabled:
+- Line length: 120 characters (matching legacy flake8 config)
+- Import sorting (replaces isort)
+- Code formatting (replaces black)
+- Django-specific linting rules
+- Python 3.12+ modern syntax upgrades
+- Comprehensive error checking and style enforcement
+
+#### CI Integration
+
+The GitHub Actions workflow automatically runs Ruff on all pull requests and pushes, ensuring code quality standards are maintained.

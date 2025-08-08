@@ -5,50 +5,53 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.11
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    - name: Install flake8
-      run: pip install flake8 flake8-import-order flake8-future-import flake8-commas flake8-logging-format flake8-quotes
-    - name: Lint with flake8
+        python-version-file: ".python-version"
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync --dev
+    - name: Lint with Ruff
       run: |
-        flake8 --version
-        flake8
+        uv run ruff --version
+        uv run ruff check --config pyproject.toml .
+    - name: Check formatting with Ruff
+      run: uv run ruff format --check --config pyproject.toml .
   unit:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.11
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    - name: Cache pip
-      uses: actions/cache@v4
+        python-version-file: ".python-version"
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
       with:
-        path: ~/.cache/pip
-        key: pip-${{ runner.os }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('requirements.txt') }}
-    - name: Install unit test dependencies
+        enable-cache: true
+    - name: Install dependencies
       run: |
-        pip install wheel
-        pip install -r requirements.txt
-        pip install mysqlclient coverage
+        uv sync --extra test
         cp .ci.settings.py dmoj/local_settings.py
     - name: Start MySQL
       run: sudo systemctl start mysql.service
     - name: Run unit tests
-      run: coverage run --source=. manage.py test judge
+      run: uv run coverage run --source=. manage.py test judge
     - name: Generate coverage report
-      run: coverage xml
+      run: uv run coverage xml
     - uses: codecov/codecov-action@v4
   styles:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Node 20
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Install npm packages
         run: npm install -g sass postcss-cli postcss autoprefixer
       - name: Build style.css
