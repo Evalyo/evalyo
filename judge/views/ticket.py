@@ -25,8 +25,6 @@ from judge.views.problem import ProblemMixin
 from judge.widgets import MartorWidget
 
 ticket_widget = MartorWidget(
-    editor_msg=_('Please click on "Preview" before creating your ticket.'),
-    button_text=_('Create'),
     attrs={'data-markdownfy-url': reverse_lazy('ticket_preview')})
 ticket_comment_widget = MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('ticket_preview')})
 

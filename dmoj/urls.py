@@ -8,6 +8,7 @@ from django.urls import include, path, re_path, reverse
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import RedirectView
+from django.conf.urls.static import static as static_serve
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
@@ -314,6 +315,9 @@ urlpatterns = [
             path('upload-image', martor_image_uploader, name='martor_image_uploader'),
             path('search-user', markdown_search_user, name='martor_search_user'),
         ])),
+
+        # Add native martor URLs for compatibility
+        path('', include('martor.urls')),
     ])),
 
     path('feed/', include([
@@ -392,3 +396,7 @@ if 'newsletter' in settings.INSTALLED_APPS:
     urlpatterns.append(path('newsletter/', include('newsletter.urls')))
 if 'impersonate' in settings.INSTALLED_APPS:
     urlpatterns.append(path('impersonate/', include('impersonate.urls')))
+
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static_serve(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

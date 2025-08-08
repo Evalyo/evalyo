@@ -500,7 +500,8 @@ MARTOR_ENABLE_CONFIGS = {
     'living': 'false',
     'hljs': 'false',
 }
-MARTOR_MARKDOWNIFY_URL = '/widgets/preview/default'
+# MARTOR_MARKDOWNIFY_URL = '/widgets/preview/default'  # Custom implementation
+# Using native martor URLs now with martor.urls inclusion
 MARTOR_SEARCH_USERS_URL = '/widgets/martor/search-user'
 MARTOR_UPLOAD_URL = '/widgets/martor/upload-image'
 MARTOR_MARKDOWN_BASE_MENTION_URL = '/user/'
@@ -560,6 +561,10 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'resources'),
 ]
 STATIC_URL = '/static/'
+
+# Media files (uploaded files)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Define a cache
 CACHES = {}

@@ -27,15 +27,9 @@ class CommentForm(ModelForm):
     class Meta:
         model = Comment
         fields = ['body', 'parent']
-        widgets = {
-            'parent': forms.HiddenInput(),
-        }
-
-        widgets['body'] = MartorWidget(
-            editor_msg=_('Please click on "Preview" before posting your comment.'),
-            button_text=_('Post!'),
+        widgets = {'parent': forms.HiddenInput(), 'body': MartorWidget(
             attrs={'data-markdownfy-url': reverse_lazy('comment_preview')},
-        )
+        )}
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
