@@ -15,6 +15,10 @@ import os
 from django.utils.translation import gettext_lazy as _
 from django_jinja.builtins import DEFAULT_EXTENSIONS
 from jinja2 import select_autoescape
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -22,17 +26,17 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '5*9f5q57mqmlz2#f$x1h76&jxy#yortjl1v+l*6hd18$d*yx#0'
+SECRET_KEY = os.getenv('SECRET_KEY', 'This key is not very secure and you should change it.')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes', 'on')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
 
 SITE_ID = 1
-SITE_NAME = 'DMOJ'
-SITE_LONG_NAME = 'DMOJ: Modern Online Judge'
-SITE_ADMIN_EMAIL = ''
+SITE_NAME = os.getenv('SITE_NAME', 'DMOJ')
+SITE_LONG_NAME = os.getenv('SITE_LONG_NAME', 'DMOJ: Modern Online Judge')
+SITE_ADMIN_EMAIL = os.getenv('SITE_ADMIN_EMAIL', 'admin@example.com')
 
 DMOJ_REQUIRE_STAFF_2FA = True
 # Display warnings that admins will not perform 2FA recovery.
@@ -48,16 +52,16 @@ DMOJ_PP_STEP = 0.95
 DMOJ_PP_ENTRIES = 100
 DMOJ_PP_BONUS_FUNCTION = lambda n: 300 * (1 - 0.997 ** n)  # noqa: E731
 
-ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'
-SELECT2_JS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
-SELECT2_CSS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
+ACE_URL = os.getenv('ACE_URL', '//cdnjs.cloudflare.com/ajax/libs/ace/1.2.3/')
+SELECT2_JS_URL = os.getenv('SELECT2_JS_URL', '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js')
+SELECT2_CSS_URL = os.getenv('SELECT2_CSS_URL', '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css')
 
-DMOJ_CAMO_URL = None
-DMOJ_CAMO_KEY = None
-DMOJ_CAMO_HTTPS = False
-DMOJ_CAMO_EXCLUDE = ()
+DMOJ_CAMO_URL = os.getenv('DMOJ_CAMO_URL')
+DMOJ_CAMO_KEY = os.getenv('DMOJ_CAMO_KEY')
+DMOJ_CAMO_HTTPS = os.getenv('DMOJ_CAMO_HTTPS', 'False').lower() in ('true', '1', 'yes', 'on')
+DMOJ_CAMO_EXCLUDE = tuple(os.getenv('DMOJ_CAMO_EXCLUDE', '').split(',')) if os.getenv('DMOJ_CAMO_EXCLUDE') else ()
 
-DMOJ_PROBLEM_DATA_ROOT = None
+DMOJ_PROBLEM_DATA_ROOT = os.getenv('DMOJ_PROBLEM_DATA_ROOT')
 
 DMOJ_PROBLEM_MIN_TIME_LIMIT = 0  # seconds
 DMOJ_PROBLEM_MAX_TIME_LIMIT = 60  # seconds
@@ -155,14 +159,14 @@ BAD_MAIL_PROVIDERS = ()
 BAD_MAIL_PROVIDER_REGEX = ()
 NOFOLLOW_EXCLUDED = set()
 
-TIMEZONE_MAP = 'https://static.dmoj.ca/assets/earth.jpg'
+TIMEZONE_MAP = os.getenv('TIMEZONE_MAP', 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/1024px-Blue_Marble_2002.png')
 
-TERMS_OF_SERVICE_URL = None
+TERMS_OF_SERVICE_URL = os.getenv('TERMS_OF_SERVICE_URL')
 DEFAULT_USER_LANGUAGE = 'PY3'
 
 INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
-JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
+JQUERY_JS = os.getenv('JQUERY_JS', '//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js')
 FONTAWESOME_CSS = '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
 DMOJ_CANONICAL = ''
 
@@ -515,36 +519,43 @@ MARTOR_UPLOAD_SAFE_EXTS = {'.jpg', '.png', '.gif'}
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE':'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME', 'dmoj'),
+        'USER': os.getenv('DB_USER', 'dmoj'),
+        'PASSWORD': os.getenv('DB_PASSWORD', '<mariadb user password>'),
+        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'OPTIONS': {
+            'charset': os.getenv('DB_CHARSET', 'utf8mb4'),
+            'sql_mode': os.getenv('DB_SQL_MODE', 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'),
+        },
     },
 }
 
-ENABLE_FTS = False
+ENABLE_FTS = os.getenv('ENABLE_FTS', 'True').lower() in ('true', '1', 'yes', 'on')
 
 # Bridged configuration
-BRIDGED_JUDGE_ADDRESS = [('localhost', 9999)]
+BRIDGED_JUDGE_ADDRESS = [(os.getenv('BRIDGED_JUDGE_HOST', 'localhost'), int(os.getenv('BRIDGED_JUDGE_PORT', '9999')))]
 BRIDGED_JUDGE_PROXIES = None
-BRIDGED_DJANGO_ADDRESS = [('localhost', 9998)]
+BRIDGED_DJANGO_ADDRESS = [(os.getenv('BRIDGED_DJANGO_HOST', 'localhost'), int(os.getenv('BRIDGED_DJANGO_PORT', '9998')))]
 BRIDGED_DJANGO_CONNECT = None
 
 # Event Server configuration
-EVENT_DAEMON_USE = False
-EVENT_DAEMON_POST = 'ws://localhost:9997/'
-EVENT_DAEMON_GET = 'ws://localhost:9996/'
-EVENT_DAEMON_POLL = '/channels/'
-EVENT_DAEMON_KEY = None
-EVENT_DAEMON_AMQP_EXCHANGE = 'dmoj-events'
+EVENT_DAEMON_USE = os.getenv('EVENT_DAEMON_USE', 'False').lower() in ('true', '1', 'yes', 'on')
+EVENT_DAEMON_POST = os.getenv('EVENT_DAEMON_POST', 'ws://localhost:9997/')
+EVENT_DAEMON_GET = os.getenv('EVENT_DAEMON_GET', 'ws://localhost:9996/')
+EVENT_DAEMON_POLL = os.getenv('EVENT_DAEMON_POLL', '/channels/')
+EVENT_DAEMON_KEY = os.getenv('EVENT_DAEMON_KEY')
+EVENT_DAEMON_AMQP_EXCHANGE = os.getenv('EVENT_DAEMON_AMQP_EXCHANGE', 'dmoj-events')
 EVENT_DAEMON_SUBMISSION_KEY = '6Sdmkx^%pk@GsifDfXcwX*Y7LRF%RGT8vmFpSxFBT$fwS7trc8raWfN#CSfQuKApx&$B#Gh2L7p%W!Ww'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 # Whatever you do, this better be one of the entries in `LANGUAGES`.
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = os.getenv('LANGUAGE_CODE', 'en-us')
 TIME_ZONE = 'UTC'
-DEFAULT_USER_TIME_ZONE = 'America/Toronto'
-USE_I18N = True
+DEFAULT_USER_TIME_ZONE = os.getenv('DEFAULT_USER_TIME_ZONE', 'Asia/Ho_Chi_Minh')
+USE_I18N = os.getenv('USE_I18N', 'True').lower() in ('true', '1', 'yes', 'on')
 
 # Cookies
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
@@ -561,13 +572,28 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'resources'),
 ]
 STATIC_URL = '/static/'
+STATIC_ROOT = os.getenv('STATIC_ROOT', '/tmp/static')
 
 # Media files (uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Define a cache
-CACHES = {}
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+}
+
+# Django compressor settings
+COMPRESS_OUTPUT_DIR = os.getenv('COMPRESS_OUTPUT_DIR', 'cache')
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSMinFilter',
+]
+COMPRESS_JS_FILTERS = ['compressor.filters.jsmin.JSMinFilter']
+COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
+STATICFILES_FINDERS += ('compressor.finders.CompressorFinder',)
 
 # Authentication
 AUTHENTICATION_BACKENDS = (
@@ -600,17 +626,106 @@ SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_SLUGIFY_USERNAMES = True
 SOCIAL_AUTH_SLUGIFY_FUNCTION = 'judge.social_auth.slugify_username'
 
+# Social authentication keys
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', '')
+SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('SOCIAL_AUTH_FACEBOOK_KEY', '')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('SOCIAL_AUTH_FACEBOOK_SECRET', '')
+SOCIAL_AUTH_GITHUB_SECURE_KEY = os.getenv('SOCIAL_AUTH_GITHUB_SECURE_KEY', '')
+SOCIAL_AUTH_GITHUB_SECURE_SECRET = os.getenv('SOCIAL_AUTH_GITHUB_SECURE_SECRET', '')
+
 MOSS_API_KEY = None
 
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379')
 
 WEBAUTHN_RP_ID = None
 
-try:
-    with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
-        exec(f.read(), globals())
-except IOError:
-    pass
+# Email configuration
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
+# Gmail settings
+if EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes', 'on')
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+
+# Mailgun settings
+if EMAIL_BACKEND == 'django_mailgun.MailgunBackend':
+    MAILGUN_ACCESS_KEY = os.getenv('MAILGUN_ACCESS_KEY', '')
+    MAILGUN_SERVER_NAME = os.getenv('MAILGUN_SERVER_NAME', '')
+
+# SendGrid settings
+if EMAIL_BACKEND == 'sgbackend.SendGridBackend':
+    SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+
+# Admin settings
+ADMINS = [
+    (os.getenv('ADMIN_NAME', 'Your Name'), os.getenv('ADMIN_EMAIL', 'your.email@example.com')),
+] if os.getenv('ADMIN_NAME') and os.getenv('ADMIN_EMAIL') else []
+
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', 'DMOJ: Modern Online Judge <errors@dmoj.ca>')
+
+# PDF settings
+DMOJ_PDF_PDFOID_URL = os.getenv('DMOJ_PDF_PDFOID_URL')
+DMOJ_PDF_PROBLEM_CACHE = os.getenv('DMOJ_PDF_PROBLEM_CACHE')
+DMOJ_PDF_PROBLEM_INTERNAL = os.getenv('DMOJ_PDF_PROBLEM_INTERNAL')
+
+# User data download settings  
+DMOJ_USER_DATA_DOWNLOAD = os.getenv('DMOJ_USER_DATA_DOWNLOAD', 'False').lower() in ('true', '1', 'yes', 'on')
+DMOJ_USER_DATA_CACHE = os.getenv('DMOJ_USER_DATA_CACHE', '')
+DMOJ_USER_DATA_INTERNAL = os.getenv('DMOJ_USER_DATA_INTERNAL')
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'file': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s',
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s',
+        },
+    },
+    'handlers': {
+        'bridge': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs.txt',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'file',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'dmoj.throttle_mail.ThrottledEmailHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'file',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'judge.bridge': {
+            'handlers': ['bridge', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        '': {
+            'handlers': ['console'],
+        },
+    },
+}
 
 
 # Check settings are consistent
