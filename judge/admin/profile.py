@@ -36,7 +36,7 @@ class TimezoneFilter(admin.SimpleListFilter):
     parameter_name = 'timezone'
 
     def lookups(self, request, model_admin):
-        return Profile.objects.values_list('timezone', 'timezone').distinct().order_by('timezone')
+        return [(tz, tz) for tz in Profile.objects.order_by('timezone').values_list('timezone', flat=True).distinct()]
 
     def queryset(self, request, queryset):
         if self.value() is None:
