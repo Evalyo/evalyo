@@ -1,32 +1,49 @@
 <h1 align="center">
-  <img src="https://github.com/DMOJ/online-judge/blob/master/logo.png?raw=true" width="120px">
+  <img src="https://github.com/Evalyo/evalyo/blob/master/logo.png?raw=true" width="120px">
   <br>
-  DMOJ: Modern Online Judge
+  Evalyo: Next-Generation Online Judge
 </h1>
 <p align="center">
-  <a href="https://github.com/DMOJ/online-judge/actions?query=workflow%3Abuild">
-    <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/DMOJ/online-judge/build.yml?branch=master"/>
+  <a href="https://github.com/Evalyo/evalyo/actions?query=workflow%3Abuild">
+    <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/Evalyo/evalyo/build.yml?branch=master"/>
   </a>
   <a href="LICENSE.md">
-    <img alt="License" src="https://img.shields.io/github/license/DMOJ/online-judge"/>
+    <img alt="License" src="https://img.shields.io/github/license/Evalyo/evalyo"/>
   </a>
-  <a href="https://dmoj.ca/about/discord/">
+  <!-- <a href="https://dmoj.ca/about/discord/">
     <img src="https://img.shields.io/discord/677340492651954177?color=%237289DA&label=Discord"/>
+  </a> -->
+  <a href="https://pypi.org/project/Django/">
+    <img alt="Django 5.2 LTS" src="https://img.shields.io/badge/Django-5.2%20LTS-092E20?logo=django"/>
+  </a>
+  <a href="https://asgi.readthedocs.io/">
+    <img alt="ASGI" src="https://img.shields.io/badge/ASGI-WebSockets-blue"/>
   </a>
 </p>
 
-A modern open-source online judge and contest platform system. It has been used to host thousands of competitions, including several national olympiads.
+A **modernized**, **easy-to-setup** online judge and contest platform built on Django 5.2 LTS with real-time features powered by ASGI websockets. Based on the proven DMOJ foundation, Evalyo brings cutting-edge performance and simplified deployment to competitive programming platforms.
 
-See it live at [dmoj.ca](https://dmoj.ca/)!
+**Quick Setup • Real-time Updates • Modern UI • High Performance**
 
 ## Features
 
+### Modern Architecture
+* **Django 5.2 LTS** - Built on the latest long-term support version
+* **ASGI WebSockets** - Real-time bidirectional communication
+* **Async-first design** - High-performance concurrent request handling
+* **Docker-ready** - Containerized deployment with docker-compose
+* **Easy setup** - Streamlined installation process with automated configuration
+
+### Performance & Scalability
 * [Support for over **60 language runtimes**](https://github.com/DMOJ/online-judge#supported-languages)
 * Highly robust judging system:
    * Supports **interactive** and **signature-graded** tasks
    * Supports **runtime data generators** and **custom output validators**
    * Specifying **per-language resource limits**
    * Capable of scaling to hundreds of judging servers
+   * **Real-time submission updates** via WebSockets
+
+### Contest Management
 * Extremely configurable contest system:
    * Supports ICPC/IOI/AtCoder/ECOO formats out-of-the-box
    * **System testing** supported
@@ -34,62 +51,98 @@ See it live at [dmoj.ca](https://dmoj.ca/)!
    * [Elo-MMR](https://arxiv.org/abs/2101.00400)-style **rating**
    * **Plagiarism detection** via [Stanford MOSS](https://theory.stanford.edu/~aiken/moss/)
    * Restricting contest access to particular organizations or users
+
+### Content & UI
 * Rich problem statements, with support for **LaTeX math and diagrams**
    * Automatic **PDF generation** for easy distribution
    * Built-in support for **editorials**
-* **Live updates** for submissions
+* **Modern responsive UI** - Mobile-first design with dark mode support
+* **Live updates** for submissions with real-time notifications
 * Internationalized site interface
 * Home page blog and activity stream
+
+### Security & Authentication
 * Fine-grained permission control for staff
 * OAuth login with Google, Facebook, and Github
 * Two-factor authentication support
+* **Modern security practices** following Django 5.2 LTS guidelines
 
 ## Installation
 
-Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site/installation). Feel free to reach out to us on [Discord](https://dmoj.ca/about/discord/) if you have any questions.
+### Quick Start (Recommended)
+
+Evalyo features a **streamlined setup process** that gets you running in minutes:
+
+```bash
+# Clone the repository
+git clone https://github.com/Evalyo/evalyo.git
+cd evalyo
+
+# Quick setup with Docker (recommended)
+docker-compose up -d
+
+# Or use the automated setup script
+./scripts/quick-setup.sh
+```
+
+### Prerequisites
+
+- **Python 3.11+** with pip
+- **Node.js 18+** with npm
+- **MySQL 8.0+**
+- **Redis 6.0+** (for WebSocket connections and caching)
+
+### Manual Installation
+
+For detailed setup instructions and customization options, check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site/installation).
+
+### Support
+
+<!-- - **Discord**: Join our [Discord community](https://dmoj.ca/about/discord/) for real-time help -->
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/Evalyo/evalyo/issues)
+- **Discussions**: Ask questions in [GitHub Discussions](https://github.com/Evalyo/evalyo/discussions)
 
 ## Screenshots
 
-### Sleek problem statements
-Problems are written in Markdown, with LaTeX-enabled math and figures, as well as syntax highlighting. Problem statements can be saved to PDF for ease of distribution to contestants.
+### Modern Problem Statements
+Rich problem statements written in Markdown with LaTeX-enabled math, interactive diagrams, and modern syntax highlighting. Dark mode support and responsive design ensure optimal reading experience across all devices.
 
 ![](https://i.imgur.com/7KD7h5r.png)
 
-### Submit in over 60 languages
-Contestants may submit in over 60 programming languages with syntax highlighting. Problem authors can restrict problems to specific languages, and set language-specific resource limits.
+### Enhanced Code Submission
+Submit in over 60 programming languages with advanced syntax highlighting, auto-completion, and real-time validation. The modern editor supports themes, vim/emacs keybindings, and collaborative features.
 
 ![](https://i.imgur.com/8CjfHQb.png)
 
-### Live submission status
-Submission pages feature live updates, and submissions may be aborted by both submission authors and administrators. Compilation errors and warnings for a number of languages feature color highlighting.
+### ⚡ Real-time Submission Tracking
+**ASGI WebSocket-powered** live updates for submission status with instant notifications. Real-time compilation feedback, execution progress, and detailed error reporting with syntax highlighting.
 
 ![](https://i.imgur.com/Hom0U3R.png)
 
-Global, per-problem, and per-contest submission lists are live-updating, and can be filtered by status and language.
+Live-updating submission lists with advanced filtering, search capabilities, and real-time status changes. Modern infinite scroll and optimized performance for large datasets.
 
 ![](https://i.imgur.com/rc7orzj.png)
 
-### Extensible contest system
-Contests feature an optional rating system, and can be configured to run in any timeframe. Users are also able to participate virtually after the contest ends. ICPC, IOI, AtCoder, and ECOO contest formats are supported out-of-the-box, and new formats can be added with custom code.
+### Advanced Contest Management
+Feature-rich contest system with real-time leaderboards, virtual participation, and comprehensive analytics. Supports multiple contest formats with customizable scoring and modern WebSocket-based updates.
 
 ![](https://i.imgur.com/0V1fzZi.png)
 
-Contests may be limited to particular organizations, or require access codes to join. Hidden scoreboards are supported. The contest system integrates with [Stanford MOSS](https://theory.stanford.edu/~aiken/moss/) to provide plagiarism checking.
-Editorial support is built-in, and editorials are automatically published once a contest ends.
+Enhanced contest security with organization restrictions, access codes, and integrated plagiarism detection. Automated editorial publishing and comprehensive contest analytics.
 
-### Home page blog and activity stream
+### Responsive Home Interface
 
-Announcements from administrators, ongoing contests, recent comments and new problems are easily accessible from the home page.
+Modern, mobile-first home page with real-time activity feeds, upcoming contests, and personalized content recommendations. Clean design with dark mode support.
 
 ![](https://i.imgur.com/zpQAoDB.png)
 
-### Internationalized interface
-Use the site in whatever language you're most comfortable in &mdash; visit [translate.dmoj.ca](https://translate.dmoj.ca/) to check the translation status of your preferred language. Problem authors can provide statements in multiple languages, and DMOJ will display the most relevant one to a reader.
+### Internationalization & Accessibility
+Comprehensive internationalization support with RTL language compatibility. Visit [translate.dmoj.ca](https://translate.dmoj.ca/) to contribute translations. WCAG 2.1 AA compliant with screen reader support.
 
 ![](https://i.imgur.com/OeuI0o5.png)
 
-### Highly featured administration interface
-The DMOJ admin interface is highly versatile, and can be efficiently used for anything from managing users to authoring problem statements.
+### Streamlined Administration
+Modern Django 5.2 admin interface with enhanced UX, bulk operations, and real-time monitoring. Simplified user management, problem authoring tools, and comprehensive system analytics.
 
 ![](https://static.dmoj.ca/data/_other/readme/problem-admin.png)
 
@@ -97,7 +150,7 @@ The DMOJ admin interface is highly versatile, and can be efficiently used for an
 
 ## Supported languages
 
-Check out [**DMOJ/judge-server**](https://github.com/DMOJ/judge-server) for more judging backend details.
+Check out [**Evalyo/judge-server**](https://github.com/Evalyo/judge-server) for more judging backend details.
 
 Supported languages include:
 * C++ 11/14/17/20 (GCC and Clang)
