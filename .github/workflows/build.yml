@@ -17,10 +17,10 @@ jobs:
       run: uv sync --dev
     - name: Check linting with Ruff
       run: |
-        ruff --version
-        ruff check
+        uv run ruff --version
+        uv run ruff check
     - name: Check formatting with Ruff
-      run: ruff format --check
+      run: uv run ruff format --check
   unit:
     runs-on: ubuntu-latest
     services:
@@ -37,7 +37,7 @@ jobs:
           --health-cmd="mysqladmin ping -h localhost"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=3s
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
