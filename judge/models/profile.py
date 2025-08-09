@@ -65,9 +65,9 @@ class Organization(models.Model):
     )
     access_code = models.CharField(
         max_length=7,
-        help_text=_("Student access code."),  # noqa: DJ001
+        help_text=_("Student access code."),
         verbose_name=_("access code"),
-        null=True,
+        default="",
         blank=True,
     )
     logo_override_image = models.CharField(
@@ -135,8 +135,8 @@ class Class(models.Model):
     access_code = models.CharField(
         max_length=7,
         verbose_name=_("access code"),
-        null=True,
-        blank=True,  # noqa: DJ001
+        default="",
+        blank=True,
         help_text=_("Student access code."),
     )
     admins = models.ManyToManyField(
@@ -283,15 +283,15 @@ class Profile(models.Model):
     last_totp_timecode = models.IntegerField(verbose_name=_("last TOTP timecode"), default=0)
     api_token = models.CharField(
         max_length=64,
-        null=True,
-        verbose_name=_("API token"),  # noqa: DJ001
+        default="",
+        verbose_name=_("API token"),
         help_text=_("64-character hex-encoded API access token."),
         validators=[RegexValidator("^[a-f0-9]{64}$", _("API token must be None or hexadecimal"))],
     )
     notes = models.TextField(
         verbose_name=_("internal notes"),
-        null=True,
-        blank=True,  # noqa: DJ001
+        blank=True,
+        default="",
         help_text=_("Notes for administrators regarding this user."),
     )
     data_last_downloaded = models.DateTimeField(verbose_name=_("last data download time"), null=True, blank=True)

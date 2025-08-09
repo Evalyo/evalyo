@@ -78,8 +78,7 @@ class Submission(models.Model):
         verbose_name=_("result"),
         max_length=3,
         choices=SUBMISSION_RESULT,  # noqa: DJ001
-        default=None,
-        null=True,
+        default="",
         blank=True,
     )
     error = models.TextField(verbose_name=_("compile errors"), null=True, blank=True)  # noqa: DJ001
