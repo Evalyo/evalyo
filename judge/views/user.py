@@ -178,15 +178,22 @@ class UserAboutPage(UserPage):
             'height': '%.3fem' % rating_progress(rating.rating),
         } for rating in ratings]))
 
-        submissions = (
-            self.object.submission_set
-            .annotate(date_only=TruncDate('date'))
-            .values('date_only').annotate(cnt=Count('id'))
-        )
+        submissions = []
+        for submission in self.object.submission_set.all():
+            local_date = timezone.localtime(submission.date).date()
+            submissions.append((local_date, 1))
+
+        # Group by date in Python
+        from collections import defaultdict
+        date_counts = defaultdict(int)
+        for date_val, count in submissions:
+            date_counts[date_val] += count
 
         context['submission_data'] = mark_safe(json.dumps({
-            date_counts['date_only'].isoformat(): date_counts['cnt'] for date_counts in submissions
+            date_val.isoformat(): count
+            for date_val, count in date_counts.items()
         }))
+
         context['submission_metadata'] = mark_safe(json.dumps({
             'min_year': (
                 self.object.submission_set
