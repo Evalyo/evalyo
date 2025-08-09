@@ -15,12 +15,12 @@ jobs:
         enable-cache: true
     - name: Install dependencies
       run: uv sync --dev
-    - name: Lint with Ruff
+    - name: Check linting with Ruff
       run: |
-        uv run ruff --version
-        uv run ruff check
+        ruff --version
+        ruff check
     - name: Check formatting with Ruff
-      run: uv run ruff format --check
+      run: ruff format --check
   unit:
     runs-on: ubuntu-latest
     steps:
@@ -37,18 +37,17 @@ jobs:
       run: |
         uv sync --extra test
         cp .env.ci .env
-    - name: Start MySQL
-      run: sudo systemctl start mysql.service
+    - name: Start MariaDB
+      run: sudo systemctl start mariadb.service
     - name: Setup database
       run: |
-        sudo mysql -e "CREATE DATABASE IF NOT EXISTS dmoj;"
-        sudo mysql -e "CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY 'root';"
-        sudo mysql -e "GRANT ALL PRIVILEGES ON dmoj.* TO 'root'@'localhost';"
-        sudo mysql -e "FLUSH PRIVILEGES;"
+        sudo mysql -e "CREATE DATABASE dmoj DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;"
+        sudo mysql -e "GRANT ALL PRIVILEGES ON dmoj.* TO 'dmoj'@'localhost' IDENTIFIED BY '<mariadb user password>';"
+        mariadb-tzinfo-to-sql /usr/share/zoneinfo | sudo mariadb -u root mysql
     - name: Run unit tests
-      run: uv run coverage run --source=. manage.py test judge
+      run: coverage run --source=. manage.py test judge
     - name: Generate coverage report
-      run: uv run coverage xml
+      run: coverage xml
     - uses: codecov/codecov-action@v4
   styles:
     runs-on: ubuntu-latest
