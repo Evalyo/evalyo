@@ -811,6 +811,6 @@ if DMOJ_PDF_PDFOID_URL:
     # If using X-Accel-Redirect, the cache directory must be configured
     assert DMOJ_PDF_PROBLEM_INTERNAL is None or DMOJ_PDF_PROBLEM_CACHE is not None
 
-# Compute these values after local_settings.py is loaded
+# Compute these values after environment variables are loaded
 ACE_DEFAULT_LIGHT_THEME = DMOJ_THEME_DEFAULT_ACE_THEME["light"]
 ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME["dark"]
