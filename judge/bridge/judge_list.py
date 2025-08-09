@@ -1,21 +1,19 @@
+import contextlib
 import logging
 from collections import namedtuple
 from random import random
 from threading import RLock
 
+from llist import dllist
+
 from judge.judge_priority import REJUDGE_PRIORITY
 
-try:
-    from llist import dllist
-except ImportError:
-    from pyllist import dllist
+logger = logging.getLogger("judge.bridge")
 
-logger = logging.getLogger('judge.bridge')
-
-PriorityMarker = namedtuple('PriorityMarker', 'priority')
+PriorityMarker = namedtuple("PriorityMarker", "priority")
 
 
-class JudgeList(object):
+class JudgeList:
     priorities = 4
 
     def __init__(self):
@@ -40,18 +38,20 @@ class JudgeList(object):
                 elif priority >= REJUDGE_PRIORITY and self.should_reserve_judge():
                     return
                 else:
-                    id, problem, language, source, judge_id = node.value
+                    submission_id, problem, language, source, judge_id = node.value
                     if judge.can_judge(problem, language, judge_id):
-                        self.submission_map[id] = judge
+                        self.submission_map[submission_id] = judge
                         try:
-                            judge.submit(id, problem, language, source)
+                            judge.submit(submission_id, problem, language, source)
                         except Exception:
-                            logger.exception('Failed to dispatch %d (%s, %s) to %s', id, problem, language, judge.name)
+                            logger.exception(
+                                "Failed to dispatch %d (%s, %s) to %s", submission_id, problem, language, judge.name
+                            )
                             self.judges.remove(judge)
                             return
-                        logger.info('Dispatched queued submission %d: %s', id, judge.name)
+                        logger.info("Dispatched queued submission %d: %s", submission_id, judge.name)
                         self.queue.remove(node)
-                        del self.node_map[id]
+                        del self.node_map[submission_id]
                         break
                 node = node.next
 
@@ -59,13 +59,14 @@ class JudgeList(object):
         with self.lock:
             old = self.min_tier
             try:
-                self.min_tier = min(judge.tier for judge in self.judges
-                                    if judge.tier is not None and not judge.is_disabled)
+                self.min_tier = min(
+                    judge.tier for judge in self.judges if judge.tier is not None and not judge.is_disabled
+                )
             except ValueError:
                 self.min_tier = None
 
             if old != self.min_tier:
-                logger.info('Minimum tier changed from %s to %s', old, self.min_tier)
+                logger.info("Minimum tier changed from %s to %s", old, self.min_tier)
 
             # We must be adding a judge, let register handle the new judge.
             if old is None:
@@ -75,7 +76,7 @@ class JudgeList(object):
             # This is only possible when removing a judge.
             if self.min_tier is not None and self.min_tier > old:
                 for judge in self.current_tier_judges():
-                    logger.info('Minimum tier increased, trying to dispatch to judge: %s', judge.name)
+                    logger.info("Minimum tier increased, trying to dispatch to judge: %s", judge.name)
                     if not judge.working:
                         self._handle_free_judge(judge)
 
@@ -119,10 +120,8 @@ class JudgeList(object):
         with self.lock:
             sub = judge.get_current_submission()
             if sub is not None:
-                try:
+                with contextlib.suppress(KeyError):
                     del self.submission_map[sub]
-                except KeyError:
-                    pass
             self.judges.discard(judge)
             self._update_min_tier()
 
@@ -138,14 +137,14 @@ class JudgeList(object):
         return iter(self.judges)
 
     def on_judge_free(self, judge, submission):
-        logger.info('Judge available after grading %d: %s', submission, judge.name)
+        logger.info("Judge available after grading %d: %s", submission, judge.name)
         with self.lock:
             del self.submission_map[submission]
             judge._working = False
             self._handle_free_judge(judge)
 
     def abort(self, submission):
-        logger.info('Abort request: %d', submission)
+        logger.info("Abort request: %d", submission)
         with self.lock:
             try:
                 self.submission_map[submission].abort()
@@ -163,19 +162,19 @@ class JudgeList(object):
     def check_priority(self, priority):
         return 0 <= priority < self.priorities
 
-    def judge(self, id, problem, language, source, judge_id, priority):
+    def judge(self, submission_id, problem, language, source, judge_id, priority):
         with self.lock:
-            if id in self.submission_map or id in self.node_map:
+            if submission_id in self.submission_map or submission_id in self.node_map:
                 # Already judging, don't queue again. This can happen during batch rejudges, rejudges should be
                 # idempotent.
-                return
+                return None
 
             candidates = [judge for judge in self.current_tier_judges() if judge.can_judge(problem, language, judge_id)]
             available = [judge for judge in candidates if not judge.working and not judge.is_disabled]
             if judge_id:
-                logger.info('Specified judge %s is%savailable', judge_id, ' ' if available else ' not ')
+                logger.info("Specified judge %s is%savailable", judge_id, " " if available else " not ")
             else:
-                logger.info('Free judges: %d', len(available))
+                logger.info("Free judges: %d", len(available))
 
             if len(candidates) > 1 and len(available) == 1 and priority >= REJUDGE_PRIORITY:
                 available = []
@@ -183,17 +182,20 @@ class JudgeList(object):
             if available:
                 # Schedule the submission on the judge reporting least load.
                 judge = min(available, key=lambda judge: (judge.load, random()))
-                logger.info('Dispatched submission %d to: %s', id, judge.name)
-                self.submission_map[id] = judge
+                logger.info("Dispatched submission %d to: %s", submission_id, judge.name)
+                self.submission_map[submission_id] = judge
                 try:
-                    judge.submit(id, problem, language, source)
+                    judge.submit(submission_id, problem, language, source)
                 except Exception:
-                    logger.exception('Failed to dispatch %d (%s, %s) to %s', id, problem, language, judge.name)
+                    logger.exception(
+                        "Failed to dispatch %d (%s, %s) to %s", submission_id, problem, language, judge.name
+                    )
                     self.judges.discard(judge)
-                    return self.judge(id, problem, language, source, judge_id, priority)
+                    return self.judge(submission_id, problem, language, source, judge_id, priority)
             else:
-                self.node_map[id] = self.queue.insert(
-                    (id, problem, language, source, judge_id),
+                self.node_map[submission_id] = self.queue.insert(
+                    (submission_id, problem, language, source, judge_id),
                     self.priority[priority],
                 )
-                logger.info('Queued submission: %d', id)
+                logger.info("Queued submission: %d", submission_id)
+        return None

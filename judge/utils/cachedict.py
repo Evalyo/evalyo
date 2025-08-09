@@ -1,6 +1,6 @@
 class CacheDict(dict):
     def __init__(self, func):
-        super(CacheDict, self).__init__()
+        super().__init__()
         self.func = func
 
     def __missing__(self, key):

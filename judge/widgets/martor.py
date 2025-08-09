@@ -1,11 +1,12 @@
-from martor.widgets import AdminMartorWidget as OldAdminMartorWidget, MartorWidget as OldMartorWidget
+from martor.widgets import AdminMartorWidget as OldAdminMartorWidget
+from martor.widgets import MartorWidget as OldMartorWidget
 
-__all__ = ['MartorWidget', 'AdminMartorWidget']
+__all__ = ["MartorWidget", "AdminMartorWidget"]
 
 
 class MartorWidget(OldMartorWidget):
     class Media:
-        js = ['martor-mathjax.js']
+        js = ["martor-mathjax.js"]
 
 
 class AdminMartorWidget(OldAdminMartorWidget):
@@ -13,6 +14,6 @@ class AdminMartorWidget(OldAdminMartorWidget):
 
     class Media:
         css = {
-            'all': ['martor-description.css', 'featherlight.css'],
+            "all": ["martor-description.css", "featherlight.css"],
         }
-        js = ['admin/js/jquery.init.js', 'martor-mathjax.js', 'libs/featherlight/featherlight.min.js']
+        js = ["admin/js/jquery.init.js", "martor-mathjax.js", "libs/featherlight/featherlight.min.js"]

@@ -2,9 +2,9 @@ from django.core.cache import cache
 
 
 def finished_submission(sub):
-    keys = ['user_complete:%d' % sub.user_id, 'user_attempted:%s' % sub.user_id]
-    if hasattr(sub, 'contest'):
+    keys = [f"user_complete:{sub.user_id}", f"user_attempted:{sub.user_id}"]
+    if hasattr(sub, "contest"):
         participation = sub.contest.participation
-        keys += ['contest_complete:%d' % participation.id]
-        keys += ['contest_attempted:%d' % participation.id]
+        keys += [f"contest_complete:{participation.id}"]
+        keys += [f"contest_attempted:{participation.id}"]
     cache.delete_many(keys)

@@ -5,6 +5,7 @@ from django.utils.http import urlencode
 
 from judge.models import Profile
 from judge.utils.unicode import utf8bytes
+
 from . import registry
 
 
@@ -17,9 +18,9 @@ def gravatar(email, size=80, default=None):
     elif isinstance(email, AbstractUser):
         email = email.email
 
-    gravatar_url = 'https://www.gravatar.com/avatar/' + hashlib.md5(utf8bytes(email.strip().lower())).hexdigest() + '?'
-    args = {'d': 'identicon', 's': str(size)}
+    gravatar_url = "https://www.gravatar.com/avatar/" + hashlib.md5(utf8bytes(email.strip().lower())).hexdigest() + "?"
+    args = {"d": "identicon", "s": str(size)}
     if default:
-        args['f'] = 'y'
+        args["f"] = "y"
     gravatar_url += urlencode(args)
     return gravatar_url

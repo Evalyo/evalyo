@@ -4,8 +4,14 @@ from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.db.models import F
 from django.forms.models import ModelForm
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, \
-    HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
@@ -19,44 +25,49 @@ from judge.models import Comment, CommentVote
 from judge.utils.views import TitleMixin
 from judge.widgets import MartorWidget
 
-__all__ = ['upvote_comment', 'downvote_comment', 'CommentEditAjax', 'CommentContent',
-           'CommentEdit']
+__all__ = ["upvote_comment", "downvote_comment", "CommentEditAjax", "CommentContent", "CommentEdit"]
 
 
-@login_required
-def vote_comment(request, delta):
+def _validate_vote_request(request, delta):
+    """Validate the vote request and return error response if invalid, None if valid."""
     if abs(delta) != 1:
-        return HttpResponseBadRequest(_('Messing around, are we?'), content_type='text/plain')
+        return HttpResponseBadRequest(_("Messing around, are we?"), content_type="text/plain")
 
-    if request.method != 'POST':
+    if request.method != "POST":
         return HttpResponseForbidden()
 
-    if 'id' not in request.POST or len(request.POST['id']) > 10:
+    if "id" not in request.POST or len(request.POST["id"]) > 10:
         return HttpResponseBadRequest()
 
     if not request.user.is_staff and not request.profile.has_any_solves:
-        return HttpResponseBadRequest(_('You must solve at least one problem before you can vote.'),
-                                      content_type='text/plain')
+        return HttpResponseBadRequest(
+            _("You must solve at least one problem before you can vote."), content_type="text/plain"
+        )
 
     if request.profile.mute:
-        return HttpResponseBadRequest(_('Your part is silent, little toad.'), content_type='text/plain')
+        return HttpResponseBadRequest(_("Your part is silent, little toad."), content_type="text/plain")
 
-    try:
-        comment_id = int(request.POST['id'])
-    except ValueError:
-        return HttpResponseBadRequest()
+    return None
 
+
+def _get_comment_and_validate(request, comment_id):
+    """Get comment and validate voting permissions."""
     comment = Comment.objects.filter(id=comment_id, hidden=False).first()
 
     if not comment:
-        return HttpResponseNotFound(_('Comment not found.'), content_type='text/plain')
+        return None, HttpResponseNotFound(_("Comment not found."), content_type="text/plain")
 
     if comment.author == request.profile:
-        return HttpResponseBadRequest(_('You cannot vote on your own comments.'), content_type='text/plain')
+        return None, HttpResponseBadRequest(_("You cannot vote on your own comments."), content_type="text/plain")
 
+    return comment, None
+
+
+def _handle_vote_creation(comment_id, profile, delta):
+    """Handle the creation or updating of a vote with race condition handling."""
     vote = CommentVote()
     vote.comment_id = comment_id
-    vote.voter = request.profile
+    vote.voter = profile
     vote.score = delta
 
     while True:
@@ -65,18 +76,44 @@ def vote_comment(request, delta):
         except IntegrityError:
             with LockModel(write=(CommentVote,)):
                 try:
-                    vote = CommentVote.objects.get(comment_id=comment_id, voter=request.profile)
+                    existing_vote = CommentVote.objects.get(comment_id=comment_id, voter=profile)
                 except CommentVote.DoesNotExist:
                     # We must continue racing in case this is exploited to manipulate votes.
                     continue
-                if -vote.score != delta:
-                    return HttpResponseBadRequest(_('You already voted.'), content_type='text/plain')
-                vote.delete()
-            Comment.objects.filter(id=comment_id).update(score=F('score') - vote.score)
+                if -existing_vote.score != delta:
+                    return HttpResponseBadRequest(_("You already voted."), content_type="text/plain")
+                existing_vote.delete()
+            Comment.objects.filter(id=comment_id).update(score=F("score") - existing_vote.score)
         else:
-            Comment.objects.filter(id=comment_id).update(score=F('score') + delta)
+            Comment.objects.filter(id=comment_id).update(score=F("score") + delta)
         break
-    return HttpResponse('success', content_type='text/plain')
+    return None
+
+
+@login_required
+def vote_comment(request, delta):
+    # Validate request
+    validation_error = _validate_vote_request(request, delta)
+    if validation_error:
+        return validation_error
+
+    # Parse and validate comment ID
+    try:
+        comment_id = int(request.POST["id"])
+    except ValueError:
+        return HttpResponseBadRequest()
+
+    # Get comment and validate permissions
+    comment, error_response = _get_comment_and_validate(request, comment_id)
+    if error_response:
+        return error_response
+
+    # Handle vote creation/update
+    vote_error = _handle_vote_creation(comment_id, request.profile, delta)
+    if vote_error:
+        return vote_error
+
+    return HttpResponse("success", content_type="text/plain")
 
 
 def upvote_comment(request):
@@ -87,10 +124,10 @@ def downvote_comment(request):
     return vote_comment(request, -1)
 
 
-class CommentMixin(object):
+class CommentMixin:
     model = Comment
-    pk_url_kwarg = 'id'
-    context_object_name = 'comment'
+    pk_url_kwarg = "id"
+    context_object_name = "comment"
 
     def get_object(self, queryset=None):
         comment = super().get_object(queryset)
@@ -100,21 +137,21 @@ class CommentMixin(object):
 
 
 class CommentRevisionAjax(CommentMixin, DetailView):
-    template_name = 'comments/revision-ajax.html'
+    template_name = "comments/revision-ajax.html"
 
     def get_context_data(self, **kwargs):
-        context = super(CommentRevisionAjax, self).get_context_data(**kwargs)
-        revisions = Version.objects.get_for_object(self.object).order_by('-revision')
+        context = super().get_context_data(**kwargs)
+        revisions = Version.objects.get_for_object(self.object).order_by("-revision")
         try:
-            wanted = min(max(int(self.request.GET.get('revision', 0)), 0), len(revisions) - 1)
+            wanted = min(max(int(self.request.GET.get("revision", 0)), 0), len(revisions) - 1)
         except ValueError:
-            raise Http404
-        context['revision'] = revisions[wanted]
+            raise Http404 from None
+        context["revision"] = revisions[wanted]
         return context
 
     def get_object(self, queryset=None):
-        comment = super(CommentRevisionAjax, self).get_object(queryset)
-        if comment.hidden and not self.request.user.has_perm('judge.change_comment'):
+        comment = super().get_object(queryset)
+        if comment.hidden and not self.request.user.has_perm("judge.change_comment"):
             raise Http404()
         return comment
 
@@ -122,28 +159,28 @@ class CommentRevisionAjax(CommentMixin, DetailView):
 class CommentEditForm(ModelForm):
     class Meta:
         model = Comment
-        fields = ['body']
+        fields = ["body"]
         widgets = {
-            'body': MartorWidget(
+            "body": MartorWidget(
                 attrs={
-                    'id': 'id_edit',
-                    'data-markdownfy-url': reverse_lazy('comment_preview'),
+                    "id": "id_edit",
+                    "data-markdownfy-url": reverse_lazy("comment_preview"),
                 },
             ),
         }
 
 
 class CommentEditAjax(LoginRequiredMixin, CommentMixin, UpdateView):
-    template_name = 'comments/edit-ajax.html'
+    template_name = "comments/edit-ajax.html"
     form_class = CommentEditForm
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
-            revisions.set_comment(_('Edited from site'))
+            revisions.set_comment(_("Edited from site"))
             revisions.set_user(self.request.user)
 
             self.object = comment = form.save(commit=False)
-            comment.revisions = F('revisions') + 1
+            comment.revisions = F("revisions") + 1
             comment.save()
             return HttpResponseRedirect(self.get_success_url())
 
@@ -151,8 +188,8 @@ class CommentEditAjax(LoginRequiredMixin, CommentMixin, UpdateView):
         return self.object.get_absolute_url()
 
     def get_object(self, queryset=None):
-        comment = super(CommentEditAjax, self).get_object(queryset)
-        if self.request.user.has_perm('judge.change_comment'):
+        comment = super().get_object(queryset)
+        if self.request.user.has_perm("judge.change_comment"):
             return comment
         profile = self.request.profile
         if profile != comment.author or profile.mute or comment.hidden:
@@ -161,36 +198,37 @@ class CommentEditAjax(LoginRequiredMixin, CommentMixin, UpdateView):
 
 
 class CommentEdit(TitleMixin, CommentEditAjax):
-    template_name = 'comments/edit.html'
+    template_name = "comments/edit.html"
 
     def get_title(self):
-        return _('Editing comment')
+        return _("Editing comment")
 
 
 class CommentContent(CommentMixin, DetailView):
-    template_name = 'comments/content.html'
+    template_name = "comments/content.html"
 
 
 class CommentVotesAjax(PermissionRequiredMixin, CommentMixin, DetailView):
-    template_name = 'comments/votes.html'
-    permission_required = 'judge.change_comment'
+    template_name = "comments/votes.html"
+    permission_required = "judge.change_comment"
 
     def get_context_data(self, **kwargs):
-        context = super(CommentVotesAjax, self).get_context_data(**kwargs)
-        context['votes'] = (self.object.votes.select_related('voter__user')
-                            .only('id', 'voter__display_rank', 'voter__user__username', 'score'))
+        context = super().get_context_data(**kwargs)
+        context["votes"] = self.object.votes.select_related("voter__user").only(
+            "id", "voter__display_rank", "voter__user__username", "score"
+        )
         return context
 
 
 @require_POST
 def comment_hide(request):
-    if not request.user.has_perm('judge.change_comment'):
+    if not request.user.has_perm("judge.change_comment"):
         raise PermissionDenied()
     try:
-        comment_id = int(request.POST['id'])
+        comment_id = int(request.POST["id"])
     except ValueError:
         return HttpResponseBadRequest()
 
     comment = get_object_or_404(Comment, id=comment_id)
     comment.get_descendants(include_self=True).update(hidden=True)
-    return HttpResponse('ok')
+    return HttpResponse("ok")

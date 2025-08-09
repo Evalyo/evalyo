@@ -10,29 +10,29 @@ from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widg
 class TicketMessageForm(ModelForm):
     class Meta:
         widgets = {
-            'user': AdminHeavySelect2Widget(data_view='profile_select2'),
-            'body': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('ticket_preview')}),
+            "user": AdminHeavySelect2Widget(data_view="profile_select2"),
+            "body": AdminMartorWidget(attrs={"data-markdownfy-url": reverse_lazy("ticket_preview")}),
         }
 
 
 class TicketMessageInline(StackedInline):
     model = TicketMessage
     form = TicketMessageForm
-    fields = ('user', 'body')
+    fields = ("user", "body")
 
 
 class TicketForm(ModelForm):
     class Meta:
         widgets = {
-            'user': AdminHeavySelect2Widget(data_view='profile_select2'),
-            'assignees': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
+            "user": AdminHeavySelect2Widget(data_view="profile_select2"),
+            "assignees": AdminHeavySelect2MultipleWidget(data_view="profile_select2"),
         }
 
 
 class TicketAdmin(ModelAdmin):
-    fields = ('title', 'time', 'user', 'assignees', 'content_type', 'object_id', 'notes')
-    readonly_fields = ('time',)
-    list_display = ('title', 'user', 'time', 'linked_item')
+    fields = ("title", "time", "user", "assignees", "content_type", "object_id", "notes")
+    readonly_fields = ("time",)
+    list_display = ("title", "user", "time", "linked_item")
     inlines = [TicketMessageInline]
     form = TicketForm
-    date_hierarchy = 'time'
+    date_hierarchy = "time"

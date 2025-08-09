@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 
 
-class TimezoneMiddleware(object):
+class TimezoneMiddleware:
     def __init__(self, get_response=None):
         self.get_response = get_response
 

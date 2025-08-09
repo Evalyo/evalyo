@@ -1,11 +1,11 @@
 from django_jinja.library import render_with
 
-globals = {}
+global_functions = {}
 tests = {}
 filters = {}
 extensions = []
 
-__all__ = ['render_with', 'function', 'filter', 'test', 'extension']
+__all__ = ["render_with", "function", "jinja_filter", "test", "extension"]
 
 
 def _store_function(store, func, name=None):
@@ -16,32 +16,32 @@ def _store_function(store, func, name=None):
 
 def _register_function(store, name, func):
     if name is None and func is None:
+
         def decorator(func):
             _store_function(store, func)
             return func
 
         return decorator
-    elif name is not None and func is None:
+    if name is not None and func is None:
         if callable(name):
             _store_function(store, name)
             return name
-        else:
-            def decorator(func):
-                _store_function(store, func, name)
-                return func
 
-            return decorator
-    else:
-        _store_function(store, func, name)
-        return func
+        def decorator(func):
+            _store_function(store, func, name)
+            return func
+
+        return decorator
+    _store_function(store, func, name)
+    return func
 
 
-def filter(name=None, func=None):
+def jinja_filter(name=None, func=None):
     return _register_function(filters, name, func)
 
 
 def function(name=None, func=None):
-    return _register_function(globals, name, func)
+    return _register_function(global_functions, name, func)
 
 
 def test(name=None, func=None):

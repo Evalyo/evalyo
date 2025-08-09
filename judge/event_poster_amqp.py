@@ -1,3 +1,4 @@
+import contextlib
 import json
 import threading
 from time import time
@@ -6,10 +7,10 @@ import pika
 from django.conf import settings
 from pika.exceptions import AMQPError
 
-__all__ = ['EventPoster', 'post', 'last']
+__all__ = ["EventPoster", "post", "last"]
 
 
-class EventPoster(object):
+class EventPoster:
     def __init__(self):
         self._connect()
         self._exchange = settings.EVENT_DAEMON_AMQP_EXCHANGE
@@ -20,10 +21,11 @@ class EventPoster(object):
 
     def post(self, channel, message, tries=0):
         try:
-            id = int(time() * 1000000)
-            self._chan.basic_publish(self._exchange, '',
-                                     json.dumps({'id': id, 'channel': channel, 'message': message}))
-            return id
+            event_id = int(time() * 1000000)
+            self._chan.basic_publish(
+                self._exchange, "", json.dumps({"id": event_id, "channel": channel, "message": message})
+            )
+            return event_id
         except AMQPError:
             if tries > 10:
                 raise
@@ -35,7 +37,7 @@ _local = threading.local()
 
 
 def _get_poster():
-    if 'poster' not in _local.__dict__:
+    if "poster" not in _local.__dict__:
         _local.poster = EventPoster()
     return _local.poster
 
@@ -44,10 +46,8 @@ def post(channel, message):
     try:
         return _get_poster().post(channel, message)
     except AMQPError:
-        try:
+        with contextlib.suppress(AttributeError):
             del _local.poster
-        except AttributeError:
-            pass
     return 0
 
 

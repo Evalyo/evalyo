@@ -1,23 +1,25 @@
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-__all__ = ['highlight_code']
+__all__ = ["highlight_code"]
 
 
 def _make_pre_code(code):
-    return format_html('<pre><code>{0}</code></pre>', code)
+    return format_html("<pre><code>{0}</code></pre>", code)
 
 
 try:
     import pygments
-    import pygments.lexers
     import pygments.formatters
+    import pygments.lexers
     import pygments.util
 except ImportError:
+
     def highlight_code(code, language, cssclass=None):
         return _make_pre_code(code)
 else:
-    def highlight_code(code, language, cssclass='codehilite'):
+
+    def highlight_code(code, language, cssclass="codehilite"):
         try:
             lexer = pygments.lexers.get_lexer_by_name(language)
         except pygments.util.ClassNotFound:

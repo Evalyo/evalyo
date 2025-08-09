@@ -4,17 +4,17 @@ from django.utils.safestring import SafeData, mark_safe
 from lxml import html
 from lxml.etree import ParserError, XMLSyntaxError
 
-logger = logging.getLogger('judge.html')
+logger = logging.getLogger("judge.html")
 
 
 class HTMLTreeString(SafeData):
-    def __init__(self, str):
+    def __init__(self, html_string):
         try:
-            self._tree = html.fromstring(str, parser=html.HTMLParser(recover=True))
+            self._tree = html.fromstring(html_string, parser=html.HTMLParser(recover=True))
         except (XMLSyntaxError, ParserError) as e:
-            if str and (not isinstance(e, ParserError) or e.args[0] != 'Document is empty'):
-                logger.exception('Failed to parse HTML string')
-            self._tree = html.Element('div')
+            if html_string and (not isinstance(e, ParserError) or e.args[0] != "Document is empty"):
+                logger.exception("Failed to parse HTML string")
+            self._tree = html.Element("div")
 
     def __getattr__(self, attr):
         try:
@@ -23,15 +23,15 @@ class HTMLTreeString(SafeData):
             return getattr(str(self), attr)
 
     def __setattr__(self, key, value):
-        if key[0] == '_':
-            super(HTMLTreeString, self).__setattr__(key, value)
+        if key[0] == "_":
+            super().__setattr__(key, value)
         setattr(self._tree, key, value)
 
     def __repr__(self):
-        return '<HTMLTreeString %r>' % str(self)
+        return f"<HTMLTreeString {str(self)!r}>"
 
     def __str__(self):
-        return mark_safe(html.tostring(self._tree, encoding='unicode'))
+        return mark_safe(html.tostring(self._tree, encoding="unicode"))
 
     def __radd__(self, other):
         return other + str(self)
@@ -53,7 +53,7 @@ class HTMLTreeString(SafeData):
         return self._tree
 
 
-def fromstring(str):
-    if isinstance(str, HTMLTreeString):
-        return str
-    return HTMLTreeString(str)
+def fromstring(html_string):
+    if isinstance(html_string, HTMLTreeString):
+        return html_string
+    return HTMLTreeString(html_string)

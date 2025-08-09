@@ -4,9 +4,9 @@ from abc import ABCMeta, abstractmethod
 class abstractclassmethod(classmethod):
     __isabstractmethod__ = True
 
-    def __init__(self, callable):
-        callable.__isabstractmethod__ = True
-        super(abstractclassmethod, self).__init__(callable)
+    def __init__(self, func):
+        func.__isabstractmethod__ = True
+        super().__init__(func)
 
 
 class BaseContestFormat(metaclass=ABCMeta):
@@ -103,7 +103,7 @@ class BaseContestFormat(metaclass=ABCMeta):
     @classmethod
     def best_solution_state(cls, points, total):
         if not points:
-            return 'failed-score'
+            return "failed-score"
         if points == total:
-            return 'full-score'
-        return 'partial-score'
+            return "full-score"
+        return "partial-score"

@@ -1,8 +1,9 @@
 from judge.utils.camo import client as camo_client
+
 from . import registry
 
 
-@registry.filter
+@registry.jinja_filter
 def camo(url):
     if camo_client is None:
         return url

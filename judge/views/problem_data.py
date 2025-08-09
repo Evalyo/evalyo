@@ -1,8 +1,8 @@
+import contextlib
 import json
 import mimetypes
 import os
 from itertools import chain
-from typing import List
 from zipfile import BadZipfile, ZipFile
 
 from django.conf import settings
@@ -26,36 +26,36 @@ from judge.utils.views import TitleMixin, add_file_response
 from judge.views.problem import ProblemMixin
 
 mimetypes.init()
-mimetypes.add_type('application/x-yaml', '.yml')
+mimetypes.add_type("application/x-yaml", ".yml")
 
 
 def checker_args_cleaner(self):
-    data = self.cleaned_data['checker_args']
+    data = self.cleaned_data["checker_args"]
     if not data or data.isspace():
-        return ''
+        return ""
     try:
         if not isinstance(json.loads(data), dict):
-            raise ValidationError(_('Checker arguments must be a JSON object.'))
+            raise ValidationError(_("Checker arguments must be a JSON object."))
     except ValueError:
-        raise ValidationError(_('Checker arguments is invalid JSON.'))
+        raise ValidationError(_("Checker arguments is invalid JSON.")) from None
     return data
 
 
 class ProblemDataForm(ModelForm):
     def clean_zipfile(self):
-        if hasattr(self, 'zip_valid') and not self.zip_valid:
-            raise ValidationError(_('Your zip file is invalid!'))
+        if hasattr(self, "zip_valid") and not self.zip_valid:
+            raise ValidationError(_("Your zip file is invalid!"))
 
-        zipfile = self.cleaned_data['zipfile']
-        if zipfile and not zipfile.name.endswith('.zip'):
+        zipfile = self.cleaned_data["zipfile"]
+        if zipfile and not zipfile.name.endswith(".zip"):
             raise ValidationError(_("Zip files must end in '.zip'"))
 
         return zipfile
 
     def clean_generator(self):
-        generator = self.cleaned_data['generator']
-        if generator and generator.name == 'init.yml':
-            raise ValidationError(_('Generators must not be named init.yml.'))
+        generator = self.cleaned_data["generator"]
+        if generator and generator.name == "init.yml":
+            raise ValidationError(_("Generators must not be named init.yml."))
 
         return generator
 
@@ -63,10 +63,18 @@ class ProblemDataForm(ModelForm):
 
     class Meta:
         model = ProblemData
-        fields = ['zipfile', 'generator', 'unicode', 'nobigmath', 'output_limit', 'output_prefix',
-                  'checker', 'checker_args']
+        fields = [
+            "zipfile",
+            "generator",
+            "unicode",
+            "nobigmath",
+            "output_limit",
+            "output_prefix",
+            "checker",
+            "checker_args",
+        ]
         widgets = {
-            'checker_args': HiddenInput,
+            "checker_args": HiddenInput,
         }
 
 
@@ -75,36 +83,49 @@ class ProblemCaseForm(ModelForm):
 
     class Meta:
         model = ProblemTestCase
-        fields = ('order', 'type', 'input_file', 'output_file', 'points', 'is_pretest', 'output_limit',
-                  'output_prefix', 'checker', 'checker_args', 'generator_args', 'batch_dependencies')
+        fields = (
+            "order",
+            "type",
+            "input_file",
+            "output_file",
+            "points",
+            "is_pretest",
+            "output_limit",
+            "output_prefix",
+            "checker",
+            "checker_args",
+            "generator_args",
+            "batch_dependencies",
+        )
         widgets = {
-            'generator_args': HiddenInput,
-            'batch_dependencies': HiddenInput,
-            'type': Select(attrs={'style': 'width: 100%'}),
-            'points': NumberInput(attrs={'style': 'width: 4em'}),
-            'output_prefix': NumberInput(attrs={'style': 'width: 4.5em'}),
-            'output_limit': NumberInput(attrs={'style': 'width: 6em'}),
-            'checker_args': HiddenInput,
+            "generator_args": HiddenInput,
+            "batch_dependencies": HiddenInput,
+            "type": Select(attrs={"style": "width: 100%"}),
+            "points": NumberInput(attrs={"style": "width: 4em"}),
+            "output_prefix": NumberInput(attrs={"style": "width: 4.5em"}),
+            "output_limit": NumberInput(attrs={"style": "width: 6em"}),
+            "checker_args": HiddenInput,
         }
 
 
-class ProblemCaseFormSet(formset_factory(ProblemCaseForm, formset=BaseModelFormSet, extra=1, max_num=1,
-                                         can_delete=True)):
+class ProblemCaseFormSet(
+    formset_factory(ProblemCaseForm, formset=BaseModelFormSet, extra=1, max_num=1, can_delete=True)
+):
     model = ProblemTestCase
 
     def __init__(self, *args, **kwargs):
-        self.valid_files = kwargs.pop('valid_files', None)
-        super(ProblemCaseFormSet, self).__init__(*args, **kwargs)
+        self.valid_files = kwargs.pop("valid_files", None)
+        super().__init__(*args, **kwargs)
 
     def _construct_form(self, i, **kwargs):
-        form = super(ProblemCaseFormSet, self)._construct_form(i, **kwargs)
+        form = super()._construct_form(i, **kwargs)
         form.valid_files = self.valid_files
         return form
 
 
 class ProblemManagerMixin(LoginRequiredMixin, ProblemMixin, DetailView):
     def get_object(self, queryset=None):
-        problem = super(ProblemManagerMixin, self).get_object(queryset)
+        problem = super().get_object(queryset)
         if problem.is_manually_managed:
             raise Http404()
         if self.request.user.is_superuser or problem.is_editable_by(self.request.user):
@@ -113,90 +134,101 @@ class ProblemManagerMixin(LoginRequiredMixin, ProblemMixin, DetailView):
 
 
 class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
-    template_name = 'problem/submission-diff.html'
+    template_name = "problem/submission-diff.html"
 
     def get_title(self):
-        return _('Comparing submissions for {0}').format(self.object.name)
+        return _("Comparing submissions for {0}").format(self.object.name)
 
     def get_content_title(self):
-        return mark_safe(escape(_('Comparing submissions for {0}')).format(
-            format_html('<a href="{1}">{0}</a>', self.object.name, reverse('problem_detail', args=[self.object.code])),
-        ))
+        return mark_safe(
+            escape(_("Comparing submissions for {0}")).format(
+                format_html(
+                    '<a href="{1}">{0}</a>', self.object.name, reverse("problem_detail", args=[self.object.code])
+                ),
+            )
+        )
 
     def get_object(self, queryset=None):
-        problem = super(ProblemSubmissionDiff, self).get_object(queryset)
+        problem = super().get_object(queryset)
         if self.request.user.is_superuser or problem.is_editable_by(self.request.user):
             return problem
         raise Http404()
 
     def get_context_data(self, **kwargs):
-        context = super(ProblemSubmissionDiff, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         try:
-            ids = self.request.GET.getlist('id')
+            ids = self.request.GET.getlist("id")
             subs = Submission.objects.filter(id__in=ids)
         except ValueError:
-            raise Http404
+            raise Http404 from None
         if not subs:
             raise Http404
 
-        context['submissions'] = subs
+        context["submissions"] = subs
 
         # If we have associated data we can do better than just guess
-        data = ProblemTestCase.objects.filter(dataset=self.object, type='C')
-        if data:
-            num_cases = data.count()
-        else:
-            num_cases = subs.first().test_cases.count()
-        context['num_cases'] = num_cases
+        data = ProblemTestCase.objects.filter(dataset=self.object, type="C")
+        num_cases = data.count() if data else subs.first().test_cases.count()
+        context["num_cases"] = num_cases
         return context
 
 
 class ProblemDataView(TitleMixin, ProblemManagerMixin):
-    template_name = 'problem/data.html'
+    template_name = "problem/data.html"
 
     def get_title(self):
-        return _('Editing data for {0}').format(self.object.name)
+        return _("Editing data for {0}").format(self.object.name)
 
     def get_content_title(self):
-        return mark_safe(escape(_('Editing data for %s')) % (
-            format_html('<a href="{1}">{0}</a>', self.object.name,
-                        reverse('problem_detail', args=[self.object.code]))))
+        return mark_safe(
+            escape(_("Editing data for %s"))
+            % (
+                format_html(
+                    '<a href="{1}">{0}</a>', self.object.name, reverse("problem_detail", args=[self.object.code])
+                )
+            )
+        )
 
     def get_data_form(self, post=False):
-        return ProblemDataForm(data=self.request.POST if post else None, prefix='problem-data',
-                               files=self.request.FILES if post else None,
-                               instance=ProblemData.objects.get_or_create(problem=self.object)[0])
+        return ProblemDataForm(
+            data=self.request.POST if post else None,
+            prefix="problem-data",
+            files=self.request.FILES if post else None,
+            instance=ProblemData.objects.get_or_create(problem=self.object)[0],
+        )
 
     def get_case_formset(self, files, post=False):
-        return ProblemCaseFormSet(data=self.request.POST if post else None, prefix='cases', valid_files=files,
-                                  queryset=ProblemTestCase.objects.filter(dataset_id=self.object.pk).order_by('order'))
+        return ProblemCaseFormSet(
+            data=self.request.POST if post else None,
+            prefix="cases",
+            valid_files=files,
+            queryset=ProblemTestCase.objects.filter(dataset_id=self.object.pk).order_by("order"),
+        )
 
-    def get_valid_files(self, data, post=False) -> List[str]:
+    def get_valid_files(self, data, post=False) -> list[str]:
         try:
-            if post and 'problem-data-zipfile-clear' in self.request.POST:
+            if post and "problem-data-zipfile-clear" in self.request.POST:
                 return []
-            elif post and 'problem-data-zipfile' in self.request.FILES:
-                return ZipFile(self.request.FILES['problem-data-zipfile']).namelist()
-            elif data.zipfile:
+            if post and "problem-data-zipfile" in self.request.FILES:
+                return ZipFile(self.request.FILES["problem-data-zipfile"]).namelist()
+            if data.zipfile:
                 return ZipFile(data.zipfile.path).namelist()
         except BadZipfile:
             raise
         return []
 
     def get_context_data(self, **kwargs):
-        context = super(ProblemDataView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         valid_files = []
-        if 'data_form' not in context:
-            context['data_form'] = self.get_data_form()
-            try:
-                valid_files = self.get_valid_files(context['data_form'].instance)
-            except BadZipfile:
-                pass
-        context['valid_files'] = set(valid_files)
-        context['valid_files_json'] = mark_safe(json.dumps(valid_files))
+        if "data_form" not in context:
+            context["data_form"] = self.get_data_form()
+            with contextlib.suppress(BadZipfile):
+                valid_files = self.get_valid_files(context["data_form"].instance)
+        context["valid_files"] = set(valid_files)
+        context["valid_files_json"] = mark_safe(json.dumps(valid_files))
 
-        context['cases_formset'] = self.get_case_formset(valid_files)
-        context['all_case_forms'] = chain(context['cases_formset'], [context['cases_formset'].empty_form])
+        context["cases_formset"] = self.get_case_formset(valid_files)
+        context["all_case_forms"] = chain(context["cases_formset"], [context["cases_formset"].empty_form])
         return context
 
     def post(self, request, *args, **kwargs):
@@ -217,18 +249,19 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
                 case.save()
             for case in cases_formset.deleted_objects:
                 case.delete()
-            ProblemDataCompiler.generate(problem, data, problem.cases.order_by('order'), valid_files)
+            ProblemDataCompiler.generate(problem, data, problem.cases.order_by("order"), valid_files)
             return HttpResponseRedirect(request.get_full_path())
-        return self.render_to_response(self.get_context_data(data_form=data_form, cases_formset=cases_formset,
-                                                             valid_files=valid_files))
+        return self.render_to_response(
+            self.get_context_data(data_form=data_form, cases_formset=cases_formset, valid_files=valid_files)
+        )
 
     put = post
 
 
 @login_required
 def problem_data_file(request, problem, path):
-    object = get_object_or_404(Problem, code=problem)
-    if not object.is_editable_by(request.user):
+    problem_obj = get_object_or_404(Problem, code=problem)
+    if not problem_obj.is_editable_by(request.user):
         raise Http404()
 
     problem_dir = problem_data_storage.path(problem)
@@ -237,17 +270,17 @@ def problem_data_file(request, problem, path):
 
     response = HttpResponse()
 
-    if hasattr(settings, 'DMOJ_PROBLEM_DATA_INTERNAL'):
-        url_path = '%s/%s/%s' % (settings.DMOJ_PROBLEM_DATA_INTERNAL, problem, path)
+    if hasattr(settings, "DMOJ_PROBLEM_DATA_INTERNAL"):
+        url_path = f"{settings.DMOJ_PROBLEM_DATA_INTERNAL}/{problem}/{path}"
     else:
         url_path = None
 
     try:
         add_file_response(request, response, url_path, os.path.join(problem, path), problem_data_storage)
-    except IOError:
-        raise Http404()
+    except OSError:
+        raise Http404() from None
 
-    response['Content-Type'] = 'application/octet-stream'
+    response["Content-Type"] = "application/octet-stream"
     return response
 
 
@@ -258,15 +291,21 @@ def problem_init_view(request, problem):
         raise Http404()
 
     try:
-        with problem_data_storage.open(os.path.join(problem.code, 'init.yml'), 'rb') as f:
-            data = utf8text(f.read()).rstrip('\n')
-    except IOError:
-        raise Http404()
+        with problem_data_storage.open(os.path.join(problem.code, "init.yml"), "rb") as f:
+            data = utf8text(f.read()).rstrip("\n")
+    except OSError:
+        raise Http404() from None
 
-    return render(request, 'problem/yaml.html', {
-        'raw_source': data, 'highlighted_source': highlight_code(data, 'yaml'),
-        'title': _('Generated init.yml for %s') % problem.name,
-        'content_title': mark_safe(escape(_('Generated init.yml for %s')) % (
-            format_html('<a href="{1}">{0}</a>', problem.name,
-                        reverse('problem_detail', args=[problem.code])))),
-    })
+    return render(
+        request,
+        "problem/yaml.html",
+        {
+            "raw_source": data,
+            "highlighted_source": highlight_code(data, "yaml"),
+            "title": _("Generated init.yml for %s") % problem.name,
+            "content_title": mark_safe(
+                escape(_("Generated init.yml for %s"))
+                % (format_html('<a href="{1}">{0}</a>', problem.name, reverse("problem_detail", args=[problem.code])))
+            ),
+        },
+    )

@@ -11,7 +11,7 @@ from judge.bridge.judge_list import JudgeList
 from judge.bridge.server import Server
 from judge.models import Judge, Submission
 
-logger = logging.getLogger('judge.bridge')
+logger = logging.getLogger("judge.bridge")
 
 
 def reset_judges():
@@ -20,8 +20,9 @@ def reset_judges():
 
 def judge_daemon():
     reset_judges()
-    Submission.objects.filter(status__in=Submission.IN_PROGRESS_GRADING_STATUS) \
-        .update(status='IE', result='IE', error=None)
+    Submission.objects.filter(status__in=Submission.IN_PROGRESS_GRADING_STATUS).update(
+        status="IE", result="IE", error=None
+    )
     judges = JudgeList()
 
     judge_server = Server(settings.BRIDGED_JUDGE_ADDRESS, partial(JudgeHandler, judges=judges))
@@ -33,7 +34,7 @@ def judge_daemon():
     stop = threading.Event()
 
     def signal_handler(signum, _):
-        logger.info('Exiting due to %s', signal.Signals(signum).name)
+        logger.info("Exiting due to %s", signal.Signals(signum).name)
         stop.set()
 
     signal.signal(signal.SIGINT, signal_handler)

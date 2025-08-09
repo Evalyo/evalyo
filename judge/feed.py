@@ -10,21 +10,21 @@ from judge.models import BlogPost, Comment, Problem
 
 
 class ProblemFeed(Feed):
-    title = 'Recently Added %s Problems' % settings.SITE_NAME
-    link = '/'
-    description = 'The latest problems added on the %s website' % settings.SITE_LONG_NAME
+    title = f"Recently Added {settings.SITE_NAME} Problems"
+    link = "/"
+    description = f"The latest problems added on the {settings.SITE_LONG_NAME} website"
 
     def items(self):
-        return Problem.get_public_problems().order_by('-date', '-id')[:25]
+        return Problem.get_public_problems().order_by("-date", "-id")[:25]
 
     def item_title(self, problem):
         return problem.name
 
     def item_description(self, problem):
-        key = 'problem_feed:%d' % problem.id
+        key = f"problem_feed:{problem.id}"
         desc = cache.get(key)
         if desc is None:
-            desc = str(markdown(problem.description, 'problem'))[:500] + '...'
+            desc = str(markdown(problem.description, "problem"))[:500] + "..."
             cache.set(key, desc, 86400)
         return desc
 
@@ -40,21 +40,21 @@ class AtomProblemFeed(ProblemFeed):
 
 
 class CommentFeed(Feed):
-    title = 'Latest %s Comments' % settings.SITE_NAME
-    link = '/'
-    description = 'The latest comments on the %s website' % settings.SITE_LONG_NAME
+    title = f"Latest {settings.SITE_NAME} Comments"
+    link = "/"
+    description = f"The latest comments on the {settings.SITE_LONG_NAME} website"
 
     def items(self):
         return Comment.most_recent(AnonymousUser(), 25)
 
     def item_title(self, comment):
-        return '%s -> %s' % (comment.author.user.username, comment.page_title)
+        return f"{comment.author.user.username} -> {comment.page_title}"
 
     def item_description(self, comment):
-        key = 'comment_feed:%d' % comment.id
+        key = f"comment_feed:{comment.id}"
         desc = cache.get(key)
         if desc is None:
-            desc = str(markdown(comment.body, 'comment'))
+            desc = str(markdown(comment.body, "comment"))
             cache.set(key, desc, 86400)
         return desc
 
@@ -70,21 +70,21 @@ class AtomCommentFeed(CommentFeed):
 
 
 class BlogFeed(Feed):
-    title = 'Latest %s Blog Posts' % settings.SITE_NAME
-    link = '/'
-    description = 'The latest blog posts from the %s' % settings.SITE_LONG_NAME
+    title = f"Latest {settings.SITE_NAME} Blog Posts"
+    link = "/"
+    description = f"The latest blog posts from the {settings.SITE_LONG_NAME}"
 
     def items(self):
-        return BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now()).order_by('-sticky', '-publish_on')
+        return BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now()).order_by("-sticky", "-publish_on")
 
     def item_title(self, post):
         return post.title
 
     def item_description(self, post):
-        key = 'blog_feed:%d' % post.id
+        key = f"blog_feed:{post.id}"
         summary = cache.get(key)
         if summary is None:
-            summary = str(markdown(post.summary or post.content, 'blog'))
+            summary = str(markdown(post.summary or post.content, "blog"))
             cache.set(key, summary, 86400)
         return summary
 

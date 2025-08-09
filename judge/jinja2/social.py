@@ -5,8 +5,8 @@ from django_social_share.templatetags.social_share import post_to_facebook_url, 
 from . import registry
 
 SHARES = [
-    ('post_to_twitter', 'django_social_share/templatetags/post_to_twitter.html', post_to_twitter_url),
-    ('post_to_facebook', 'django_social_share/templatetags/post_to_facebook.html', post_to_facebook_url),
+    ("post_to_twitter", "django_social_share/templatetags/post_to_twitter.html", post_to_twitter_url),
+    ("post_to_facebook", "django_social_share/templatetags/post_to_facebook.html", post_to_facebook_url),
     # Deprecated:
     # ('post_to_gplus', 'django_social_share/templatetags/post_to_gplus.html', post_to_gplus_url),
     # For future versions:
@@ -18,7 +18,7 @@ SHARES = [
 def make_func(name, template, url_func):
     def func(request, *args):
         link_text = args[-1]
-        context = {'request': request, 'link_text': mark_safe(link_text)}
+        context = {"request": request, "link_text": mark_safe(link_text)}
         context = url_func(context, *args[:-1])
         return mark_safe(get_template(template).render(context))
 
@@ -33,5 +33,7 @@ for name, template, url_func in SHARES:
 @registry.function
 def recaptcha_init(language=None):
     from snowpenguin.django.recaptcha2.templatetags.recaptcha2 import recaptcha_common_init
-    return get_template('snowpenguin/recaptcha/recaptcha_init.html').render(
-        recaptcha_common_init(language, {'explicit': False}))
+
+    return get_template("snowpenguin/recaptcha/recaptcha_init.html").render(
+        recaptcha_common_init(language, {"explicit": False})
+    )

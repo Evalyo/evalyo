@@ -16,17 +16,18 @@ from judge.jinja2.markdown.lazy_load import lazy_load as lazy_load_processor
 from judge.jinja2.markdown.math import MathInlineGrammar, MathInlineLexer, MathRenderer
 from judge.utils.camo import client as camo_client
 from judge.utils.texoid import TEXOID_ENABLED, TexoidRenderer
-from .bleach_whitelist import all_styles, mathml_attrs, mathml_tags
-from .. import registry
 
-logger = logging.getLogger('judge.html')
+from .. import registry
+from .bleach_whitelist import all_styles, mathml_attrs, mathml_tags
+
+logger = logging.getLogger("judge.html")
 
 NOFOLLOW_WHITELIST = settings.NOFOLLOW_EXCLUDED
 
 
 class CodeSafeInlineGrammar(mistune.InlineGrammar):
-    double_emphasis = re.compile(r'^\*{2}([\s\S]+?)()\*{2}(?!\*)')  # **word**
-    emphasis = re.compile(r'^\*((?:\*\*|[^\*])+?)()\*(?!\*)')  # *word*
+    double_emphasis = re.compile(r"^\*{2}([\s\S]+?)()\*{2}(?!\*)")  # **word**
+    emphasis = re.compile(r"^\*((?:\*\*|[^\*])+?)()\*(?!\*)")  # *word*
 
 
 class AwesomeInlineGrammar(MathInlineGrammar, CodeSafeInlineGrammar):
@@ -39,9 +40,9 @@ class AwesomeInlineLexer(MathInlineLexer, mistune.InlineLexer):
 
 class AwesomeRenderer(MathRenderer, mistune.Renderer):
     def __init__(self, *args, **kwargs):
-        self.nofollow = kwargs.pop('nofollow', True)
-        self.texoid = TexoidRenderer() if kwargs.pop('texoid', False) else None
-        super(AwesomeRenderer, self).__init__(*args, **kwargs)
+        self.nofollow = kwargs.pop("nofollow", True)
+        self.texoid = TexoidRenderer() if kwargs.pop("texoid", False) else None
+        super().__init__(*args, **kwargs)
 
     def _link_rel(self, href):
         if href:
@@ -52,63 +53,68 @@ class AwesomeRenderer(MathRenderer, mistune.Renderer):
             else:
                 if url.netloc and url.netloc not in NOFOLLOW_WHITELIST:
                     return ' rel="nofollow"'
-        return ''
+        return ""
 
     def autolink(self, link, is_email=False):
         text = link = mistune.escape(link)
         if is_email:
-            link = 'mailto:%s' % link
-        return '<a href="%s"%s>%s</a>' % (link, self._link_rel(link), text)
+            link = f"mailto:{link}"
+        return f'<a href="{link}"{self._link_rel(link)}>{text}</a>'
 
     def table(self, header, body):
         return (
-            '<div class="h-scrollable-table">\n<table class="table">\n<thead>%s</thead>\n'
-            '<tbody>\n%s</tbody>\n</table>\n</div>\n'
-        ) % (header, body)
+            f'<div class="h-scrollable-table">\n<table class="table">\n<thead>{header}</thead>\n'
+            f"<tbody>\n{body}</tbody>\n</table>\n</div>\n"
+        )
 
     def link(self, link, title, text):
         link = mistune.escape_link(link)
         if not title:
-            return '<a href="%s"%s>%s</a>' % (link, self._link_rel(link), text)
+            return f'<a href="{link}"{self._link_rel(link)}>{text}</a>'
         title = mistune.escape(title, quote=True)
-        return '<a href="%s" title="%s"%s>%s</a>' % (link, title, self._link_rel(link), text)
+        return f'<a href="{link}" title="{title}"{self._link_rel(link)}>{text}</a>'
 
     def block_code(self, code, lang=None):
         if not lang:
-            return '\n<pre><code>%s</code></pre>\n' % mistune.escape(code).rstrip()
+            return f"\n<pre><code>{mistune.escape(code).rstrip()}</code></pre>\n"
         return highlight_code(code, lang)
 
     def block_html(self, html):
-        if self.texoid and html.startswith('<latex'):
-            attr = html[6:html.index('>')]
-            latex = html[html.index('>') + 1:html.rindex('<')]
+        if self.texoid and html.startswith("<latex"):
+            attr = html[6 : html.index(">")]
+            latex = html[html.index(">") + 1 : html.rindex("<")]
             latex = unescape(latex)
             result = self.texoid.get_result(latex)
             if not result:
-                return '<pre>%s</pre>' % mistune.escape(latex, smart_amp=False)
-            elif 'error' not in result:
-                img = ('''<img src="%(svg)s" onerror="this.src='%(png)s';this.onerror=null"'''
-                       'class="tex-full" width="%(width)s" height="%(height)s"%(tail)s>') % {
-                    'svg': result['svg'], 'png': result['png'],
-                    'width': result['meta']['width'], 'height': result['meta']['height'],
-                    'tail': ' /' if self.options.get('use_xhtml') else '',
-                }
-                style = ['max-width: 100%',
-                         'height: %s' % result['meta']['height'],
-                         'max-height: %s' % result['meta']['height'],
-                         'width: %s' % result['meta']['width']]
-                if 'inline' in attr:
-                    tag = 'span'
+                return f"<pre>{mistune.escape(latex, smart_amp=False)}</pre>"
+            if "error" not in result:
+                img = (
+                    '''<img src="{svg}" onerror="this.src='{png}';this.onerror=null"'''
+                    'class="tex-full" width="{width}" height="{height}"{tail}>'
+                ).format(
+                    svg=result["svg"],
+                    png=result["png"],
+                    width=result["meta"]["width"],
+                    height=result["meta"]["height"],
+                    tail=" /" if self.options.get("use_xhtml") else "",
+                )
+                style = [
+                    "max-width: 100%",
+                    "height: {}".format(result["meta"]["height"]),
+                    "max-height: {}".format(result["meta"]["height"]),
+                    "width: {}".format(result["meta"]["width"]),
+                ]
+                if "inline" in attr:
+                    tag = "span"
                 else:
-                    tag = 'div'
-                    style += ['text-align: center']
-                return '<%s style="%s">%s</%s>' % (tag, ';'.join(style), img, tag)
-            else:
-                return '<pre>%s</pre>' % mistune.escape(result['error'], smart_amp=False)
-        return super(AwesomeRenderer, self).block_html(html)
+                    tag = "div"
+                    style += ["text-align: center"]
+                return '<{} style="{}">{}</{}>'.format(tag, ";".join(style), img, tag)
+            return "<pre>{}</pre>".format(mistune.escape(result["error"], smart_amp=False))
+        return super().block_html(html)
 
     def header(self, text, level, *args, **kwargs):
-        return super(AwesomeRenderer, self).header(text, level + 2, *args, **kwargs)
+        return super().header(text, level + 2, *args, **kwargs)
 
 
 cleaner_cache = {}
@@ -118,26 +124,26 @@ def get_cleaner(name, params):
     if name in cleaner_cache:
         return cleaner_cache[name]
 
-    styles = params.pop('styles', None)
+    styles = params.pop("styles", None)
     if styles:
-        params['css_sanitizer'] = CSSSanitizer(allowed_css_properties=all_styles if styles is True else styles)
+        params["css_sanitizer"] = CSSSanitizer(allowed_css_properties=all_styles if styles is True else styles)
 
-    if params.pop('mathml', False):
-        params['tags'] = params.get('tags', []) + mathml_tags
-        params['attributes'] = params.get('attributes', {}).copy()
-        params['attributes'].update(mathml_attrs)
+    if params.pop("mathml", False):
+        params["tags"] = params.get("tags", []) + mathml_tags
+        params["attributes"] = params.get("attributes", {}).copy()
+        params["attributes"].update(mathml_attrs)
 
     cleaner = cleaner_cache[name] = Cleaner(**params)
     return cleaner
 
 
 def fragments_to_tree(fragment):
-    tree = html.Element('div')
+    tree = html.Element("div")
     try:
         parsed = html.fragments_fromstring(fragment, parser=html.HTMLParser(recover=True))
     except (XMLSyntaxError, ParserError) as e:
-        if fragment and (not isinstance(e, ParserError) or e.args[0] != 'Document is empty'):
-            logger.exception('Failed to parse HTML string')
+        if fragment and (not isinstance(e, ParserError) or e.args[0] != "Document is empty"):
+            logger.exception("Failed to parse HTML string")
         return tree
 
     if parsed and isinstance(parsed[0], str):
@@ -148,41 +154,41 @@ def fragments_to_tree(fragment):
 
 
 def strip_paragraphs_tags(tree):
-    for p in tree.xpath('.//p'):
+    for p in tree.xpath(".//p"):
         for child in p.iterchildren(reversed=True):
             p.addnext(child)
         parent = p.getparent()
         prev = p.getprevious()
         if prev is not None:
-            prev.tail = (prev.tail or '') + (p.text or '')
+            prev.tail = (prev.tail or "") + (p.text or "")
         else:
-            parent.text = (parent.text or '') + (p.text or '')
+            parent.text = (parent.text or "") + (p.text or "")
         parent.remove(p)
 
 
 def fragment_tree_to_str(tree):
-    return html.tostring(tree, encoding='unicode')[len('<div>'):-len('</div>')]
+    return html.tostring(tree, encoding="unicode")[len("<div>") : -len("</div>")]
 
 
-@registry.filter
+@registry.jinja_filter
 def markdown(value, style, math_engine=None, lazy_load=False, strip_paragraphs=False):
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
-    escape = styles.get('safe_mode', True)
-    nofollow = styles.get('nofollow', True)
-    texoid = TEXOID_ENABLED and styles.get('texoid', False)
-    math = getattr(settings, 'MATHOID_URL') and styles.get('math', False)
-    bleach_params = styles.get('bleach', {})
+    escape = styles.get("safe_mode", True)
+    nofollow = styles.get("nofollow", True)
+    texoid = TEXOID_ENABLED and styles.get("texoid", False)
+    math = settings.MATHOID_URL and styles.get("math", False)
+    bleach_params = styles.get("bleach", {})
 
     post_processors = []
-    if styles.get('use_camo', False) and camo_client is not None:
+    if styles.get("use_camo", False) and camo_client is not None:
         post_processors.append(camo_client.update_tree)
     if lazy_load:
         post_processors.append(lazy_load_processor)
 
-    renderer = AwesomeRenderer(escape=escape, nofollow=nofollow, texoid=texoid,
-                               math=math and math_engine is not None, math_engine=math_engine)
-    markdown = mistune.Markdown(renderer=renderer, inline=AwesomeInlineLexer,
-                                parse_block_html=1, parse_inline_html=1)
+    renderer = AwesomeRenderer(
+        escape=escape, nofollow=nofollow, texoid=texoid, math=math and math_engine is not None, math_engine=math_engine
+    )
+    markdown = mistune.Markdown(renderer=renderer, inline=AwesomeInlineLexer, parse_block_html=1, parse_inline_html=1)
     result = markdown(value)
 
     if post_processors or strip_paragraphs:

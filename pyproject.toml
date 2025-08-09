@@ -49,6 +49,7 @@ dependencies = [
     "webauthn<1",
     "jsonfield>=3.2.0", # Legacy migrations
     "python-dotenv>=1.1.1",
+    "redis>=6.4.0",
 ]
 
 [project.optional-dependencies]
@@ -98,6 +99,7 @@ select = [
     "SIM", # flake8-simplify
     "G",   # flake8-logging-format (equivalent to enable-extensions = G)
 ]
+extend-safe-fixes = ["UP008", "UP031"]
 
 # Ignore rules equivalent to flake8 ignore list
 ignore = [

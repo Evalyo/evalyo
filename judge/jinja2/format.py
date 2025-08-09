@@ -7,9 +7,9 @@ from . import registry
 
 @registry.function
 def bold(text):
-    return format_html('<b>{0}</b>', text)
+    return format_html("<b>{0}</b>", text)
 
 
-@registry.filter
+@registry.jinja_filter
 def htmltojs(text):
     return format_html("'{0}'", escapejs(html.unescape(text)))

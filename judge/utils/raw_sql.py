@@ -6,13 +6,22 @@ from judge.utils.cachedict import CacheDict
 
 
 class RawSQLJoin(Join):
-    def __init__(self, subquery, subquery_params, parent_alias, table_alias, join_type, join_field, nullable,
-                 filtered_relation=None):
+    def __init__(
+        self,
+        subquery,
+        subquery_params,
+        parent_alias,
+        table_alias,
+        join_type,
+        join_field,
+        nullable,
+        filtered_relation=None,
+    ):
         self.subquery_params = subquery_params
         super().__init__(subquery, parent_alias, table_alias, join_type, join_field, nullable, filtered_relation)
 
     def as_sql(self, compiler, connection):
-        compiler.quote_cache[self.table_name] = '(%s)' % self.table_name
+        compiler.quote_cache[self.table_name] = f"({self.table_name})"
         sql, params = super().as_sql(compiler, connection)
         return sql, self.subquery_params + params
 
@@ -30,8 +39,8 @@ class FakeJoinField:
 
 
 def join_sql_subquery(
-        queryset, subquery, params, join_fields, alias, related_model, join_type=INNER, parent_model=None):
-
+    queryset, subquery, params, join_fields, alias, related_model, join_type=INNER, parent_model=None
+):
     parent_alias = queryset.query.get_initial_alias()
     try:
         queryset.query.external_aliases[alias] = True
@@ -45,9 +54,7 @@ def join_sql_subquery(
         fields.append((local, remote))
 
     join = RawSQLJoin(
-        subquery, params, parent_alias, alias, join_type,
-        FakeJoinField(fields, related_model),
-        join_type == LOUTER
+        subquery, params, parent_alias, alias, join_type, FakeJoinField(fields, related_model), join_type == LOUTER
     )
     queryset.query.join(join)
     join.table_alias = alias
@@ -59,7 +66,7 @@ def make_straight_join_query(QueryType):
             alias = super().join(join, *args, **kwargs)
             join = self.alias_map[alias]
             if join.join_type == INNER:
-                join.join_type = 'STRAIGHT_JOIN'
+                join.join_type = "STRAIGHT_JOIN"
             return alias
 
     return Query
@@ -69,7 +76,7 @@ straight_join_cache = CacheDict(make_straight_join_query)
 
 
 def use_straight_join(queryset):
-    if connections[queryset.db].vendor != 'mysql':
+    if connections[queryset.db].vendor != "mysql":
         return
     try:
         cloner = queryset.query.chain
