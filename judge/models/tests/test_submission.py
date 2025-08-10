@@ -136,7 +136,7 @@ class SubmissionTestCase(CommonDataMixin, TestCase):
         self.ie_submission.update_contest()
 
     def test_queued_submission(self):
-        self.assertIsNone(self.queued_submission.result_class)
+        self.assertEqual(self.queued_submission.result_class, "")
         self.assertEqual(self.queued_submission.memory_bytes, 0)
         self.assertEqual(self.queued_submission.short_status, "QU")
         self.assertEqual(self.queued_submission.long_status, "Queued")
