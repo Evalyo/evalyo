@@ -27,17 +27,17 @@ jobs:
       db:
         image: mariadb:latest
         env:
-          MYSQL_ROOT_PASSWORD: <mariadb user password>
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: dmoj
           MYSQL_USER: dmoj
-          MYSQL_PASSWORD: <mariadb user password>
+          MYSQL_PASSWORD: dmoj
         ports:
           - 3306:3306
-        options: >
-          --health-cmd="mysqladmin ping -h localhost"
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3s
+          --health-retries=3
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -52,15 +52,20 @@ jobs:
       run: |
         uv sync --extra test
         cp .env.ci .env
+    - name: Wait for MariaDB
+      run: |
+        timeout 60s bash -c 'until mysql -h 127.0.0.1 -u root -proot -e "SELECT 1"; do sleep 1; done'
     - name: Setup database
       run: |
-        sudo mysql -e "CREATE DATABASE dmoj DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;"
-        sudo mysql -e "GRANT ALL PRIVILEGES ON dmoj.* TO 'dmoj'@'localhost' IDENTIFIED BY '<mariadb user password>';"
-        mariadb-tzinfo-to-sql /usr/share/zoneinfo | sudo mariadb -u root mysql
+        mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS dmoj DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;"
+        mysql -h 127.0.0.1 -u root -proot -e "GRANT ALL PRIVILEGES ON dmoj.* TO 'dmoj'@'%' IDENTIFIED BY 'dmoj';"
+        mysql -h 127.0.0.1 -u root -proot -e "FLUSH PRIVILEGES;"
+    - name: Run migrations
+      run: uv run python manage.py migrate --noinput
     - name: Run unit tests
-      run: coverage run --source=. manage.py test judge
+      run: uv run coverage run --source=. manage.py test judge
     - name: Generate coverage report
-      run: coverage xml
+      run: uv run coverage xml
     - uses: codecov/codecov-action@v4
   styles:
     runs-on: ubuntu-latest
